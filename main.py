@@ -90,5 +90,21 @@ def downloader(message):
             bot.delete_message(message.chat.id, status.message_id)
     except Exception:
         bot.edit_message_text("❌ <b>Xatolik yuz berdi.</b> Havolani tekshiring.", message.chat.id, status.message_id)
+from flask import Flask
+from threading import Thread
 
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+def run():
+    app.run(host='0.0.0.0', port=8080)
+
+# Flask serverini fon rejimida ishga tushirish
+t = Thread(target=run)
+t.start()
+
+# Botni ishga tushirish
 bot.infinity_polling()
