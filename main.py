@@ -46,15 +46,13 @@ def downloader(message):
     
     status = bot.reply_to(message, "⏳ <b>Yuklanmoqda...</b>")
     try:
-                ydl_opts = {
+        ydl_opts = {
             'format': 'best',
             'outtmpl': '%(id)s.%(ext)s',
             'noplaylist': True,
             'quiet': True,
-            # Serverdagi yuklash muammolarini kamaytirish uchun:
-            'nocheckcertificate': True, 
+            'nocheckcertificate': True
         }
-
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(message.text, download=True)
             filename = ydl.prepare_filename(info)
@@ -78,3 +76,4 @@ if __name__ == "__main__":
     t = Thread(target=run)
     t.start()
     bot.infinity_polling()
+
