@@ -81,3 +81,7 @@ def downloader(message):
         bot.edit_message_text(f"❌ Xatolik: {str(e)[:50]}", message.chat.id, msg.message_id)
 
 bot.infinity_polling()
+# main.py ning eng oxiriga buni qo'ying
+if __name__ == '__main__':
+    bot.remove_webhook()
+    bot.infinity_polling(timeout=10, long_polling_timeout=5)
