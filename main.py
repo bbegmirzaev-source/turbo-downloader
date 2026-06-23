@@ -41,9 +41,44 @@ def set_lang(call):
 @bot.message_handler(func=lambda message: message.text and message.text.startswith("http"))
 def downloader(message):
     if "youtube.com" in message.text or "youtu.be" in message.text:
-        bot.reply_to(message, "❌ <b>Uzr, bu bot YouTube videolarini qo'llab-quvvatlamaydi.</b>")
+        bot.reply_to(message, "❌ <b>YouTube videolari qo'llab-quvvatlanmaydi.</b>")
         return
     
+    status = bot.reply_to(message, "⏳ <b>Yuklanmoqda...</b>")
+    try:
+        # Pinterest uchun eng mos sozlamalar
+        ydl_opts = {
+            'format': 'best',
+            'outtmpl': 'video.mp4',
+            'noplaylist': True,
+            'quiet': True,
+            'nocheckcertificate': True,
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Faylni yuklaymiz
+            ydl.download([message.text])
+            
+            # Yuklangan faylni jo'natamiz
+            if os.path.exists('video.mp4'):
+                with open('video.mp4', 'rb') as video:
+                    bot.send_video(message.chat.id, video)
+                os.remove('video.mp4')
+                bot.delete_message(message.chat.id, status.message_id)
+            else:
+                # Agar video.mp4 topilmasa, boshqa kengaytmali fayllarni qidiramiz
+                for file in os.listdir('.'):
+                    if file.startswith('video') and (file.endswith('.mp4') or file.endswith('.mkv')):
+                        with open(file, 'rb') as video:
+                            bot.send_video(message.chat.id, video)
+                        os.remove(file)
+                        bot.delete_message(message.chat.id, status.message_id)
+                        return
+                raise Exception("Fayl topilmadi")
+                
+    except Exception as e:
+        bot.edit_message_text(f"❌ <b>Xatolik:</b> {e}", message.chat.id, status.message_id)   
     status = bot.reply_to(message, "⏳ <b>Yuklanmoqda...</b>")
     try:
         ydl_opts = {
