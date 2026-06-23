@@ -75,4 +75,18 @@ def download_video(message):
         bot.edit_message_text(f"❌ Xatolik: {str(e)}", message.chat.id, msg.message_id)
 
 bot.polling(none_stop=True)
+from flask import Flask
+from threading import Thread
+
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is running!"
+
+def run():
+    app.run(host='0.0.0.0', port=8080)
+
+t = Thread(target=run)
+t.start()
 
