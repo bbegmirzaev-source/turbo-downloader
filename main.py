@@ -63,13 +63,14 @@ def download_video(message):
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
-            bot.edit_message_text("✅ Yuklandi! Yuborilmoqda...", message.chat.id, msg.message_id)
-            bot.send_video(message.chat.id, open(filename, 'rb'))
-            os.remove(filename)
-            bot.delete_message(message.chat.id, msg.message_id)
+        with ydl_opts = {
+    'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+    'noplaylist': True,
+    # YouTube'ni chalg'itish uchun
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'referer': 'https://www.google.com/',
+}
+)
     except Exception as e:
         bot.edit_message_text(f"❌ Xatolik: {str(e)}", message.chat.id, msg.message_id)
 
