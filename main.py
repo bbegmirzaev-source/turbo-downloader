@@ -5,7 +5,7 @@ import os
 import sqlite3
 
 # O'z ma'lumotlaringizni kiriting
-TOKEN = "8692887677:AAGWsUowGR_TaHit0BfEv_XRvvG-g710Dwg"
+TOKEN "8692887677:AAE4bNG-McXCUwnv5dYsRboGFlv2FyIFzQc"
 ADMIN_ID = 7801965871 
 
 bot = telebot.TeleBot(TOKEN)
