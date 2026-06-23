@@ -57,25 +57,30 @@ def set_lang(call):
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id)
 
 # --- YUKLASH ---
-import requests # Buni importlar qatoriga qo'shishni unutmang!
+import requests
 
-@bot.message_handler(func=lambda message: message.text and message.text.startswith("http"))
+@bot.message_handler(func=lambda message: message.text and "pin.it" in message.text)
 def downloader(message):
-    status = bot.reply_to(message, "⏳ <b>Yuklanmoqda...</b>")
+    status = bot.reply_to(message, "⏳ <b>Havola kengaytirilmoqda...</b>")
     try:
-        # Pinterest uchun mashhur bepul API
-        api_url = f"https://pinterest-video-api.vercel.app/api?url={message.text}"
+        # Qisqa havolani to'liq manzilga aylantirish
+        url = message.text
+        session = requests.Session()
+        resp = session.head(url, allow_redirects=True)
+        long_url = resp.url
+        
+        # Endi to'liq manzil bilan API'ga so'rov yuboramiz
+        api_url = f"https://pinterest-video-api.vercel.app/api?url={long_url}"
         response = requests.get(api_url).json()
         
         if 'video_url' in response:
-            video_url = response['video_url']
-            bot.send_video(message.chat.id, video_url)
+            bot.send_video(message.chat.id, response['video_url'])
             bot.delete_message(message.chat.id, status.message_id)
         else:
-            bot.edit_message_text("❌ <b>Video topilmadi. Havolani tekshiring.</b>", message.chat.id, status.message_id)
+            bot.edit_message_text("❌ <b>API javob bermadi. Pinterest himoyasi faol.</b>", message.chat.id, status.message_id)
             
     except Exception as e:
-        bot.edit_message_text(f"❌ <b>Xatolik yuz berdi.</b>", message.chat.id, status.message_id)
+        bot.edit_message_text(f"❌ <b>Xatolik:</b> {e}", message.chat.id, status.message_id)
 # --- SERVER ---
 app = Flask(__name__)
 @app.route('/')
