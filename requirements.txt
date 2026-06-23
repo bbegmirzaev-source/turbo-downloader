@@ -1,3 +1,4 @@
 pyTelegramBotAPI
 yt-dlp
 Flask
+yt-dlp>=2026.06.01
