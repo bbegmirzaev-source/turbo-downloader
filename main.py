@@ -108,13 +108,26 @@ def callback_youtube(call):
     _, format_type, url = call.data.split('|', 2)
     bot.edit_message_text("⏳ Soʻrovingiz qayta ishlanmoqda, kuting...", call.message.chat.id, call.message.message_id)
     try:
-        if format_type == 'mp3':
-            ydl_opts = {'outtmpl': 'downloads/%(id)s.%(ext)s', 'format': 'bestaudio/best', 'quiet': True}
+      if format_type == 'mp3':
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'outtmpl': 'downloads/%(title)s.%(ext)s'
+    }
+    
         elif format_type == '720':
-            ydl_opts = {'outtmpl': 'downloads/%(id)s.%(ext)s', 'format': 'bestvideo[height<=720]+bestaudio/best[height<=720]', 'merge_output_format': 'mp4', 'quiet': True}
+    ydl_opts = {
+        'format': 'bestvideo[height<=720]+bestaudio/best[height<=720]',
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'outtmpl': 'downloads/%(title)s.%(ext)s'
+    }
+
         else:
-            ydl_opts = {'outtmpl': 'downloads/%(id)s.%(ext)s', 'format': 'bestvideo[height<=360]+bestaudio/best[height<=360]', 'merge_output_format': 'mp4', 'quiet': True}
-            
+    ydl_opts = {
+        'format': 'best',
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'outtmpl': 'downloads/%(title)s.%(ext)s'
+    }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             filename = ydl.prepare_filename(info)
