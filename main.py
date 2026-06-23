@@ -75,9 +75,11 @@ def downloader(message):
     status = bot.reply_to(message, "⏳ <b>Yuklanmoqda...</b>")
     try:
         ydl_opts = {
-            'format': 'best',
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
+    'format': 'best',  # Eng yaxshi mos keluvchi formatni avtomatik tanlaydi
+    'outtmpl': '%(id)s.%(ext)s',
+    'noplaylist': True,
+    'quiet': True,
+}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(message.text, download=True)
             filename = ydl.prepare_filename(info)
