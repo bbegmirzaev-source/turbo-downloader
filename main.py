@@ -7,60 +7,72 @@ from flask import Flask
 from threading import Thread
 
 TOKEN = "8692887677:AAE4bNG-McXCUwnv5dYsRboGFlv2FyIFzQc"
+ADMIN_ID = 7801965871
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
 
-# --- BAZA VA TIL ---
+# --- BAZA ---
 conn = sqlite3.connect('users.db', check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY)')
 conn.commit()
 
-LANGS = {
-    'uz': {'welcome': "👋 <b>Assalomu alaykum!</b>\nMen video yuklovchi botman.", 'ask': "🔗 Iltimos, video havolasini yuboring:"},
-    'ru': {'welcome': "👋 <b>Здравствуйте!</b>\nЯ бот для скачивания видео.", 'ask': "🔗 Пожалуйста, отправьте ссылку на видео:"}
-}
-
+# --- BUYRUQLAR ---
 @bot.message_handler(commands=['start'])
 def start(message):
     cursor.execute('INSERT OR IGNORE INTO users VALUES (?)', (message.chat.id,))
     conn.commit()
-    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton("🇺🇿 O'zbekcha", callback_data="lang_uz"),
                types.InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"))
     bot.send_message(message.chat.id, "Tilni tanlang / Выберите язык:", reply_markup=markup)
 
+@bot.message_handler(commands=['stat'])
+def get_stat(message):
+    if message.chat.id == ADMIN_ID:
+        cursor.execute('SELECT count(*) FROM users')
+        count = cursor.fetchone()[0]
+        bot.reply_to(message, f"📊 <b>Bot foydalanuvchilari:</b> {count} ta.")
+
+@bot.message_handler(commands=['reklama'])
+def reklama(message):
+    if message.chat.id == ADMIN_ID:
+        msg = bot.reply_to(message, "📝 Reklama matnini yuboring:")
+        bot.register_next_step_handler(msg, send_reklama)
+
+def send_reklama(message):
+    cursor.execute('SELECT id FROM users')
+    users = cursor.fetchall()
+    count = 0
+    for user in users:
+        try:
+            bot.send_message(user[0], message.text)
+            count += 1
+        except: continue
+    bot.reply_to(message, f"✅ Reklama {count} ta foydalanuvchiga yuborildi.")
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith('lang_'))
 def set_lang(call):
     lang = call.data.split('_')[1]
-    bot.edit_message_text(LANGS[lang]['welcome'] + "\n\n" + LANGS[lang]['ask'], 
-                          call.message.chat.id, call.message.message_id)
+    text = "👋 <b>Assalomu alaykum!</b>\n🔗 Iltimos, video havolasini yuboring:" if lang == 'uz' else "👋 <b>Здравствуйте!</b>\n🔗 Пожалуйста, отправьте ссылку на видео:"
+    bot.edit_message_text(text, call.message.chat.id, call.message.message_id)
 
-# --- YUKLASH FUNKSIYASI ---
+# --- YUKLASH ---
 @bot.message_handler(func=lambda message: message.text and message.text.startswith("http"))
 def downloader(message):
     status = bot.reply_to(message, "⏳ <b>Yuklanmoqda...</b>")
     try:
-        ydl_opts = {
-            'format': 'best',
-            'outtmpl': 'video.mp4',
-            'quiet': True,
-            'nocheckcertificate': True,
-            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
+        ydl_opts = {'format': 'best', 'outtmpl': 'video.mp4', 'quiet': True, 'nocheckcertificate': True}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([message.text])
-        
         if os.path.exists('video.mp4'):
             with open('video.mp4', 'rb') as video:
                 bot.send_video(message.chat.id, video)
             os.remove('video.mp4')
             bot.delete_message(message.chat.id, status.message_id)
-        else:
-            bot.edit_message_text("❌ <b>Fayl topilmadi.</b>", message.chat.id, status.message_id)
     except Exception as e:
-        bot.edit_message_text(f"❌ <b>Xatolik:</b> {e}", message.chat.id, status.message_id)
+        bot.edit_message_text(f"❌ Xatolik: {e}", message.chat.id, status.message_id)
 
-# --- FLASK SERVER (RENDER UCHUN) ---
+# --- SERVER ---
 app = Flask(__name__)
 @app.route('/')
 def home(): return "Bot is running!"
