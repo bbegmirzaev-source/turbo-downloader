@@ -57,21 +57,25 @@ def set_lang(call):
     bot.edit_message_text(text, call.message.chat.id, call.message.message_id)
 
 # --- YUKLASH ---
+import requests # Buni importlar qatoriga qo'shishni unutmang!
+
 @bot.message_handler(func=lambda message: message.text and message.text.startswith("http"))
 def downloader(message):
     status = bot.reply_to(message, "⏳ <b>Yuklanmoqda...</b>")
     try:
-        ydl_opts = {'format': 'best', 'outtmpl': 'video.mp4', 'quiet': True, 'nocheckcertificate': True}
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([message.text])
-        if os.path.exists('video.mp4'):
-            with open('video.mp4', 'rb') as video:
-                bot.send_video(message.chat.id, video)
-            os.remove('video.mp4')
+        # Pinterest uchun mashhur bepul API
+        api_url = f"https://pinterest-video-api.vercel.app/api?url={message.text}"
+        response = requests.get(api_url).json()
+        
+        if 'video_url' in response:
+            video_url = response['video_url']
+            bot.send_video(message.chat.id, video_url)
             bot.delete_message(message.chat.id, status.message_id)
+        else:
+            bot.edit_message_text("❌ <b>Video topilmadi. Havolani tekshiring.</b>", message.chat.id, status.message_id)
+            
     except Exception as e:
-        bot.edit_message_text(f"❌ Xatolik: {e}", message.chat.id, status.message_id)
-
+        bot.edit_message_text(f"❌ <b>Xatolik yuz berdi.</b>", message.chat.id, status.message_id)
 # --- SERVER ---
 app = Flask(__name__)
 @app.route('/')
