@@ -52,8 +52,25 @@ def downloader(message):
             'noplaylist': True,
             'quiet': True,
             'nocheckcertificate': True,
-            'postprocessors': [], # Ffmpeg ishlatmaslik uchun
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Info yuklashni alohida ajratamiz
+            info = ydl.extract_info(message.text, download=True)
+            filename = ydl.prepare_filename(info)
+            # Fayl yuklanganini tekshiramiz
+            if os.path.exists(filename):
+                with open(filename, 'rb') as video:
+                    bot.send_video(message.chat.id, video)
+                os.remove(filename)
+                bot.delete_message(message.chat.id, status.message_id)
+            else:
+                # Agar fayl topilmasa, info'dan fayl nomini qayta olamiz
+                # Ba'zida Pinterest faylni boshqa nom bilan saqlaydi
+                bot.send_message(message.chat.id, "Yuklash muvaffaqiyatsiz tugadi (Fayl topilmadi).")
+    except Exception as e:
+        bot.edit_message_text(f"❌ Xatolik: {e}", message.chat.id, status.message_id)
+
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(message.text, download=True)
