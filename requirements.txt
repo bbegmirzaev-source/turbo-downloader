@@ -1,3 +1,5 @@
 pyTelegramBotAPI
 yt-dlp
 flask
+# Quyidagi qator yt-dlp ni har doim yangi holatda saqlaydi
+--upgrade yt-dlp
