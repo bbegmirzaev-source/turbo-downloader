@@ -3,10 +3,12 @@ from telebot import types
 import sqlite3
 import yt_dlp
 import os
+from flask import Flask
+from threading import Thread
 
 # --- KONFIGURATSIYA ---
 TOKEN = "8692887677:AAE4bNG-McXCUwnv5dYsRboGFlv2FyIFzQc"
-ADMIN_ID = 7801965871  # O'z ID raqamingizni shu yerga yozing
+ADMIN_ID = 7801965871
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
 
 # --- BAZA BILAN ISHLASH ---
@@ -23,10 +25,8 @@ LANGS = {
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    # Foydalanuvchini bazaga qo'shish
     cursor.execute('INSERT OR IGNORE INTO users VALUES (?)', (message.chat.id,))
     conn.commit()
-    
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(types.InlineKeyboardButton("🇺🇿 O'zbekcha", callback_data="lang_uz"),
                types.InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"))
@@ -38,63 +38,32 @@ def set_lang(call):
     bot.edit_message_text(LANGS[lang]['welcome'] + "\n\n" + LANGS[lang]['ask'], 
                           call.message.chat.id, call.message.message_id)
 
-# --- STATISTIKA (Admin uchun) ---
-@bot.message_handler(commands=['stat'])
-def get_stat(message):
-    if message.chat.id == ADMIN_ID:
-        cursor.execute('SELECT count(*) FROM users')
-        count = cursor.fetchone()[0]
-        bot.reply_to(message, f"📊 <b>Bot foydalanuvchilari soni:</b> {count} ta.")
-
-# --- REKLAMA (Admin uchun) ---
-@bot.message_handler(commands=['reklama'])
-def start_reklama(message):
-    if message.chat.id == ADMIN_ID:
-        msg = bot.reply_to(message, "📝 Reklama matnini yuboring:")
-        bot.register_next_step_handler(msg, send_reklama)
-
-def send_reklama(message):
-    cursor.execute('SELECT id FROM users')
-    users = cursor.fetchall()
-    count = 0
-    for user in users:
-        try:
-            bot.send_message(user[0], message.text)
-            count += 1
-        except: continue
-    bot.reply_to(message, f"✅ Reklama {count} ta foydalanuvchiga yuborildi.")
-
-# --- VIDEO YUKLASH (YouTube'siz) ---
 @bot.message_handler(func=lambda message: message.text and message.text.startswith("http"))
 def downloader(message):
-    # YouTube'ni bloklash
     if "youtube.com" in message.text or "youtu.be" in message.text:
         bot.reply_to(message, "❌ <b>Uzr, bu bot YouTube videolarini qo'llab-quvvatlamaydi.</b>")
         return
     
     status = bot.reply_to(message, "⏳ <b>Yuklanmoqda...</b>")
     try:
-                ydl_opts = {
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        ydl_opts = {
+            'format': 'best',
             'outtmpl': '%(id)s.%(ext)s',
             'noplaylist': True,
             'quiet': True,
         }
-
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(message.text, download=True)
             filename = ydl.prepare_filename(info)
             with open(filename, 'rb') as video:
                 bot.send_video(message.chat.id, video)
-            os.remove(filename) # Server xotirasini tozalash
+            os.remove(filename)
             bot.delete_message(message.chat.id, status.message_id)
-    except Exception:
-        bot.edit_message_text("❌ <b>Xatolik yuz berdi.</b> Havolani tekshiring.", message.chat.id, status.message_id)
-from flask import Flask
-from threading import Thread
+    except Exception as e:
+        bot.edit_message_text(f"❌ <b>Xatolik yuz berdi.</b>", message.chat.id, status.message_id)
 
+# --- FLASK SERVER (Render uchun) ---
 app = Flask(__name__)
-
 @app.route('/')
 def home():
     return "Bot is running!"
@@ -102,9 +71,7 @@ def home():
 def run():
     app.run(host='0.0.0.0', port=8080)
 
-# Flask serverini fon rejimida ishga tushirish
-t = Thread(target=run)
-t.start()
-
-# Botni ishga tushirish
-bot.infinity_polling()
+if __name__ == "__main__":
+    t = Thread(target=run)
+    t.start()
+    bot.infinity_polling()
