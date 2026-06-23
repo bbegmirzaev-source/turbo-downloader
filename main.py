@@ -46,6 +46,42 @@ def downloader(message):
     
     status = bot.reply_to(message, "⏳ <b>Yuklanmoqda...</b>")
     try:
+        # Pinterest uchun eng barqaror sozlamalar
+        ydl_opts = {
+            'format': 'best',
+            'outtmpl': 'video.mp4',
+            'noplaylist': True,
+            'quiet': True,
+            'nocheckcertificate': True,
+            # Pinterest bot ekanligimizni sezib qolmasligi uchun User-Agent
+            'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            # Ba'zi videolarda format tanlash xatosini oldini olish
+            'geo_bypass': True,
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Avval videoni yuklamasdan info olishga harakat qilamiz
+            info = ydl.extract_info(message.text, download=True)
+            
+            # Fayl nomini aniqlash (info['id'] + .mp4)
+            filename = f"{info['id']}.mp4"
+            
+            # Agar fayl yuklangan bo'lsa
+            if os.path.exists(filename):
+                with open(filename, 'rb') as video:
+                    bot.send_video(message.chat.id, video)
+                os.remove(filename)
+                bot.delete_message(message.chat.id, status.message_id)
+            else:
+                raise Exception("Fayl yuklanmadi")
+                
+    except Exception as e:
+        # Agar xato bo'lsa, xatoni yozamiz
+        bot.edit_message_text(f"❌ <b>Xatolik yuz berdi:</b> {str(e)}", message.chat.id, status.message_id)
+
+    
+    status = bot.reply_to(message, "⏳ <b>Yuklanmoqda...</b>")
+    try:
         # Pinterest uchun eng mos sozlamalar
         ydl_opts = {
             'format': 'best',
