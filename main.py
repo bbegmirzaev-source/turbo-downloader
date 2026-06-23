@@ -51,8 +51,10 @@ def downloader(message):
             'outtmpl': '%(id)s.%(ext)s',
             'noplaylist': True,
             'quiet': True,
-            'nocheckcertificate': True
+            'nocheckcertificate': True,
+            'postprocessors': [], # Ffmpeg ishlatmaslik uchun
         }
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(message.text, download=True)
             filename = ydl.prepare_filename(info)
